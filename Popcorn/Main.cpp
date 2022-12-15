@@ -18,6 +18,9 @@ enum E_Brick_Type
    EBT_Blue
 };
 
+HPEN Brick_Purple_Pen, Brick_Blue_Pen;
+HBRUSH Brick_Purple_Brush, Brick_Blue_Brush;
+
 const int Global_Scale = 3;
 
 const int Cell_Width = 16; // width of brick + 1px frame
@@ -111,7 +114,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.hInstance      = hInstance;
     wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_POPCORN));
     wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground  = CreateSolidBrush(RGB(0, 0, 0));
+    wcex.hbrBackground  = CreateSolidBrush(RGB(55, 65, 70));
     wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_POPCORN);
     wcex.lpszClassName  = szWindowClass;
     wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
@@ -130,9 +133,24 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //        create and display the main program window.
 //
 //----------------------------------------------------------------------------------------------------
+void _Init()
+{ // Initialize game on start
+
+  // Purple brick
+   Brick_Purple_Pen = CreatePen(PS_SOLID, 0, RGB(255, 150, 195)); // purple frame
+   Brick_Purple_Brush = CreateSolidBrush(RGB(255, 150, 195)); // purple filling
+
+   // Blue brick
+   Brick_Blue_Pen = CreatePen(PS_SOLID, 0, RGB(85, 185, 255)); // blue frame
+   Brick_Blue_Brush = CreateSolidBrush(RGB(85, 185, 255)); // blue filling
+
+}
+//----------------------------------------------------------------------------------------------------
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // Store instance handle in our global variable
+
+   _Init();
 
    RECT window_rect; // Defines a rectangle by the coordinates of its upper-left and lower-right corners
    window_rect.left = 0;
@@ -170,14 +188,14 @@ void _DrawBrick(HDC hdc, int x, int y, E_Brick_Type brick_type)
 
    case EBT_Purple:
       // Draw a purple brick
-      pen = CreatePen(PS_SOLID, 0, RGB(255, 85, 255)); // purple frame
-      brush = CreateSolidBrush(RGB(255, 85, 255)); // purple fill
+      pen = Brick_Purple_Pen;
+      brush = Brick_Purple_Brush;
       break;
 
    case EBT_Blue:
       // Draw a blue brick
-      pen = CreatePen(PS_SOLID, 0, RGB(85, 255, 255)); // blue frame
-      brush = CreateSolidBrush(RGB(85, 255, 255)); // blue fill
+      pen = Brick_Blue_Pen;
+      brush = Brick_Blue_Brush;
       break;
 
    default:
@@ -190,16 +208,24 @@ void _DrawBrick(HDC hdc, int x, int y, E_Brick_Type brick_type)
    // Draw the brick on enetered coordinates with scale of x3
    // Coordinates = X/Y offset * 3
    RoundRect(hdc, x * Global_Scale, y * Global_Scale,
-      (x + Brick_Width) * Global_Scale, (y + Brick_Heigth) * Global_Scale, 6, 6);
+      (x + Brick_Width) * Global_Scale, (y + Brick_Heigth) * Global_Scale,
+      2 * Global_Scale, 2 * Global_Scale);
 }
 //----------------------------------------------------------------------------------------------------
-void _DrawFrame(HDC hdc)
-{ // Draws the game frame
+void _DrawLevel(HDC hdc)
+{ // Draw the Level 01
 
    for (int i = 0; i < 14; i++)
       for (int j = 0; j < 12; j++)
          _DrawBrick(hdc, Level_Offset_X + j * Cell_Width, Level_Offset_Y + i * Cell_Height, 
             (E_Brick_Type)Level_01[i][j]);
+}
+//----------------------------------------------------------------------------------------------------
+void _DrawFrame(HDC hdc)
+{ // Draw the game frame
+
+   _DrawLevel(hdc);
+
 }
 //----------------------------------------------------------------------------------------------------
 //
