@@ -11,6 +11,42 @@ HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 
+enum E_Brick_Type
+{
+   EBT_None,
+   EBT_Purple,
+   EBT_Blue
+};
+
+const int Global_Scale = 3;
+
+const int Cell_Width = 16; // width of brick + 1px frame
+const int Cell_Height = 8; // height of brick + 1px frame
+
+const int Level_Offset_X = 8; // right
+const int Level_Offset_Y = 6; // down
+
+const int Brick_Width = 15;
+const int Brick_Heigth = 7;
+
+char Level_01[14][12] =
+{
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
@@ -121,9 +157,49 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 //----------------------------------------------------------------------------------------------------
-void Draw_Frame(HDC hdc)
-{ // Draw the game frame
+void _DrawBrick(HDC hdc, int x, int y, E_Brick_Type brick_type)
+{ // Draws the brick with specified color
 
+   HPEN pen;
+   HBRUSH brush;
+
+   switch (brick_type)
+   {
+   case EBT_None:
+      return;
+
+   case EBT_Purple:
+      // Draw a purple brick
+      pen = CreatePen(PS_SOLID, 0, RGB(255, 85, 255)); // purple frame
+      brush = CreateSolidBrush(RGB(255, 85, 255)); // purple fill
+      break;
+
+   case EBT_Blue:
+      // Draw a blue brick
+      pen = CreatePen(PS_SOLID, 0, RGB(85, 255, 255)); // blue frame
+      brush = CreateSolidBrush(RGB(85, 255, 255)); // blue fill
+      break;
+
+   default:
+      return;
+   }
+
+   SelectObject(hdc, pen);
+   SelectObject(hdc, brush);
+
+   // Draw the brick on enetered coordinates with scale of x3
+   // Coordinates = X/Y offset * 3
+   RoundRect(hdc, x * Global_Scale, y * Global_Scale,
+      (x + Brick_Width) * Global_Scale, (y + Brick_Heigth) * Global_Scale, 6, 6);
+}
+//----------------------------------------------------------------------------------------------------
+void _DrawFrame(HDC hdc)
+{ // Draws the game frame
+
+   for (int i = 0; i < 14; i++)
+      for (int j = 0; j < 12; j++)
+         _DrawBrick(hdc, Level_Offset_X + j * Cell_Width, Level_Offset_Y + i * Cell_Height, 
+            (E_Brick_Type)Level_01[i][j]);
 }
 //----------------------------------------------------------------------------------------------------
 //
@@ -164,7 +240,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
             // TODO: Add any drawing code that uses hdc here...
-            Draw_Frame(hdc);
+            _DrawFrame(hdc);
             EndPaint(hWnd, &ps);
         }
         break;
