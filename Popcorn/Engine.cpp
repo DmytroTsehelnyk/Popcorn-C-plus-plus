@@ -1,4 +1,6 @@
 #include "Engine.h"
+//----------------------------------------------------------------------------------------------------
+// Initialize global variables
 
 enum E_Brick_Type
 {
@@ -7,26 +9,27 @@ enum E_Brick_Type
    EBT_Blue
 };
 
-HPEN Highlight_Pen, Object_Pink_Pen, Object_Blue_Pen;
-HBRUSH Object_Pink_Brush, Object_Blue_Brush;
+HPEN Highlight_Pen, Pink_Pen, Blue_Pen;
+HBRUSH Pink_Brush, Blue_Brush;
 
-const int Global_Scale = 3;
+const int Scale = 3;
 
 const int Cell_Width = 16; // width of brick + 1px frame
 const int Cell_Height = 8; // height of brick + 1px frame
 
-const int Level_Offset_X = 8; // right
-const int Level_Offset_Y = 6; // down
+const int X_Offset = 8; // right offset
+const int Y_Offset = 6; // down offset
 
 const int Brick_Width = 15;
 const int Brick_Heigth = 7;
 
-const int Circle_Size = 7;
+const int Ellipse_Size = 7;
 
 int Inner_Width = 21;
 
+//----------------------------------------------------------------------------------------------------
 char Level_01[14][12] =
-{
+{ // Bricks position on the game frame
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -44,116 +47,132 @@ char Level_01[14][12] =
 };
 //----------------------------------------------------------------------------------------------------
 void _CreateColor(unsigned char r, unsigned char g, unsigned char b, HPEN &pen, HBRUSH &brush)
-{
+{ // Create pen and brush according to entered rgb
+
    pen = CreatePen(PS_SOLID, 0, RGB(r, g, b));
    brush = CreateSolidBrush(RGB(r, g, b));
+   
 }
 //----------------------------------------------------------------------------------------------------
 void _Init()
-{ // Initialize game on start
+{ // Initialize colors on the game start
 
+  // Create the highlight
    Highlight_Pen = CreatePen(PS_SOLID, 0, RGB(255, 255, 255));
 
+  // Create pink color
+   _CreateColor(255, 150, 195, Pink_Pen, Pink_Brush);
 
-  // Initialize pink pen and brush
-   _CreateColor(255, 150, 195, Object_Pink_Pen, Object_Pink_Brush);
+   // Create blue color
+   _CreateColor(85, 185, 255, Blue_Pen, Blue_Brush);
 
-   // Initialize blue pen and brush
-   _CreateColor(85, 185, 255, Object_Blue_Pen, Object_Blue_Brush);
 }
 //----------------------------------------------------------------------------------------------------
 void _DrawBrick(HDC hdc, int x, int y, E_Brick_Type brick_type)
-{ // Draws the brick with specified color
+{ // Draws the brick with a specified color
 
+   // Initialize variables
    HPEN pen;
    HBRUSH brush;
 
+   // Choose color for brick according to its number
    switch (brick_type)
    {
    case EBT_None:
       return;
 
    case EBT_Pink:
-      // Draw a pink brick
-      pen = Object_Pink_Pen;
-      brush = Object_Pink_Brush;
+      pen = Pink_Pen;
+      brush = Pink_Brush;
       break;
 
    case EBT_Blue:
-      // Draw a blue brick
-      pen = Object_Blue_Pen;
-      brush = Object_Blue_Brush;
+      pen = Blue_Pen;
+      brush = Blue_Brush;
       break;
 
    default:
       return;
    }
 
+   // Paint the brick
    SelectObject(hdc, pen);
    SelectObject(hdc, brush);
 
-   // Draw the brick on enetered coordinates with scale of x3
-   RoundRect(hdc, 
-      x * Global_Scale, 
-      y * Global_Scale,
-      (x + Brick_Width) * Global_Scale, 
-      (y + Brick_Heigth) * Global_Scale,
-      2 * Global_Scale, 2 * Global_Scale);
+   // Create the brick on specified coordinates
+   RoundRect(hdc,
+      x * Scale, // X upper-left corner
+      y * Scale, // Y upper-left corner
+      (x + Brick_Width) * Scale, // X lower-right corner
+      (y + Brick_Heigth) * Scale, // Y lower-right corner
+
+      2 * Scale, // ellipse width to draw the rounded corners
+      2 * Scale); // ellipse height to draw the rounded corners
 }
 //----------------------------------------------------------------------------------------------------
 void _DrawLevel(HDC hdc)
-{ // Draw the Level 01
+{ // Draw the Level 01 (bricks position)
 
    for (int col = 0; col < 14; col++)
       for (int row = 0; row < 12; row++)
-         _DrawBrick(hdc, 
-            Level_Offset_X + row * Cell_Width, 
-            Level_Offset_Y + col * Cell_Height, 
-            (E_Brick_Type)Level_01[col][row]);
+         _DrawBrick(hdc,
+            X_Offset + row * Cell_Width, // X coordinate position
+            Y_Offset + col * Cell_Height, // Y coordinate position
+            (E_Brick_Type)Level_01[col][row]); // Brick color
 }
 //----------------------------------------------------------------------------------------------------
 void _DrawPlatform(HDC hdc, int x, int y)
 { // Draw the platform
    
-  // Assign colors to ellipces
-   SelectObject(hdc, Object_Pink_Pen);
-   SelectObject(hdc, Object_Pink_Brush);
+   // Paint the ellipses
+   SelectObject(hdc, Pink_Pen);
+   SelectObject(hdc, Pink_Brush);
 
    // Create left ellipse
    Ellipse(hdc, 
-      x * Global_Scale, 
-      y * Global_Scale, 
-      (x + Circle_Size) * Global_Scale, 
-      (y + Circle_Size) * Global_Scale);
+      x * Scale, // X upper-left corner
+      y * Scale, // Y upper-left corner
+      (x + Ellipse_Size) * Scale, // X lower-right corner
+      (y + Ellipse_Size) * Scale); // X lower-right corner
 
    // Create right ellipse
    Ellipse(hdc, 
-      (x + Inner_Width) * Global_Scale, 
-      y * Global_Scale, 
-      (x + Circle_Size + Inner_Width) * Global_Scale,
-      (y + Circle_Size) * Global_Scale);
+      (x + Inner_Width) * Scale, // X upper-left corner
+      y * Scale, // Y upper-left corner
+      (x + Ellipse_Size + Inner_Width) * Scale, // X lower-right corner
+      (y + Ellipse_Size) * Scale); // X lower-right corner
 
-   // Create highlight for platform ellipse
+   // Create highlight for left ellipse
    SelectObject(hdc, Highlight_Pen);
    Arc(hdc,
-      (x + 1) * Global_Scale,
-      (y + 1) * Global_Scale,
-      (x + Circle_Size - 1) * Global_Scale,
-      (y + Circle_Size - 1) * Global_Scale,
-      (x + 1 + 1) * Global_Scale, (y + 1) * Global_Scale,
-      (x + 1) * Global_Scale, (y + 1 + 2) * Global_Scale);
 
-   // Assign colors to central part of the platform
-   SelectObject(hdc, Object_Blue_Pen);
-   SelectObject(hdc, Object_Blue_Brush);
+      (x + 1) * Scale, // X bounding rectangle upper-left corner
+      (y + 1) * Scale, // Y bounding rectangle upper-left corner
+      (x + Ellipse_Size - 1) * Scale, // X bounding rectangle lower-right corner
+      (y + Ellipse_Size - 1) * Scale, // Y bounding rectangle lower-right corner
 
-   // Central part of the platforn
-   RoundRect(hdc, 
-      (x + 4) * Global_Scale, 
-      (y + 1) * Global_Scale, 
-      (x + 4 + Inner_Width - 1) * Global_Scale, 
-      (y + 1 + 5) * Global_Scale,
-      3 * Global_Scale, 3 * Global_Scale);
+      (x + 1 + 1) * Scale, // X arc starting point
+      (y + 1) * Scale, // Y arc starting point
+      (x + 1) * Scale, // X arc ending point
+      (y + 1 + 2) * Scale); // Y arc ending point
+
+   //--------------------------------------------------
+
+   // Paint the platform
+   SelectObject(hdc, Blue_Pen);
+   SelectObject(hdc, Blue_Brush);
+
+   // Create the platform on specified coordinates
+   RoundRect(hdc,
+      (x + 4) * Scale, // X coordinate of the upper-left corner
+      (y + 1) * Scale, // Y coordinate of the upper-left corner
+
+      (x + 4 + Inner_Width - 1) * Scale, // X coordinate of the lower-right corner
+      (y + 1 + 5) * Scale, // Y coordinate of the lower-right corner
+
+      2 * Scale, // ellipse width to draw the rounded corners
+      2 * Scale); // ellipse height to draw the rounded corners
+
 }
 //----------------------------------------------------------------------------------------------------
 void _DrawFrame(HDC hdc)
@@ -161,6 +180,7 @@ void _DrawFrame(HDC hdc)
 
    _DrawLevel(hdc);
 
-   _DrawPlatform(hdc, 50, 100);
+   _DrawPlatform(hdc, 80, 120);
+
 }
 //----------------------------------------------------------------------------------------------------
