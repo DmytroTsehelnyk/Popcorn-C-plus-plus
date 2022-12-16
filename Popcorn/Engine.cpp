@@ -1,4 +1,6 @@
 #include "Engine.h"
+#define _USE_MATH_DEFINES
+#include <cmath>
 //----------------------------------------------------------------------------------------------------
 // Initialize global variables
 
@@ -110,6 +112,57 @@ void _DrawBrick(HDC hdc, int x, int y, E_Brick_Type brick_type)
       2 * Scale); // ellipse height to draw the rounded corners
 }
 //----------------------------------------------------------------------------------------------------
+void _DrawBrickLetter(HDC hdc, int x, int y, int rotation_step)
+{ // Draw the letter
+  
+   double offset;
+
+   // Step conversion into rotation angle
+   double rotation_angle = 2.0 * M_PI / 16.0 * (double)rotation_step;
+
+   int brick_half_height = Brick_Heigth * Scale / 2;
+   int back_part_offset;
+
+   XFORM xForm, old_xForm;
+   
+   SetGraphicsMode(hdc, GM_ADVANCED);
+
+   xForm.eM11 = 1.0f;
+   xForm.eM12 = 0.0f;
+   xForm.eM21 = 0.0f;
+   xForm.eM22 = (float)cos(rotation_angle);
+   xForm.eDx = (float)x;
+   xForm.eDy = (float)y + (float)(brick_half_height);
+   GetWorldTransform(hdc, &old_xForm);
+   SetWorldTransform(hdc, &xForm);
+
+
+   SelectObject(hdc, Pink_Pen);
+   SelectObject(hdc, Pink_Brush);
+
+
+   offset = 3.0 * (1.0 - fabs(xForm.eM22)) * (double)Scale;
+
+   back_part_offset = (int)round(offset);
+
+   Rectangle(hdc, 0, 
+      -brick_half_height - back_part_offset,
+      Brick_Width * Scale, 
+      brick_half_height - back_part_offset);
+
+
+   SelectObject(hdc, Blue_Pen);
+   SelectObject(hdc, Blue_Brush);
+
+   Rectangle(hdc, 0, 
+      -brick_half_height, 
+      Brick_Width * Scale, 
+      brick_half_height);
+
+   SetWorldTransform(hdc, &old_xForm);
+
+}
+//----------------------------------------------------------------------------------------------------
 void _DrawLevel(HDC hdc)
 { // Draw the Level 01 (bricks position)
 
@@ -178,9 +231,11 @@ void _DrawPlatform(HDC hdc, int x, int y)
 void _DrawFrame(HDC hdc)
 { // Draw the game frame
 
-   _DrawLevel(hdc);
+   /*_DrawLevel(hdc);
 
-   _DrawPlatform(hdc, 80, 120);
+   _DrawPlatform(hdc, 80, 120);*/
 
+   for (int step = 0; step < 16; step++)
+      _DrawBrickLetter(hdc, 20 + step * Cell_Width * Scale, 100, step);
 }
 //----------------------------------------------------------------------------------------------------
