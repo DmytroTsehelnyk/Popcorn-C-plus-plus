@@ -114,7 +114,7 @@ void _DrawBrick(HDC hdc, int x, int y, E_Brick_Type brick_type)
 //----------------------------------------------------------------------------------------------------
 void _DrawBrickLetter(HDC hdc, int x, int y, int rotation_step)
 { // Draw the letter
-  
+
    double offset;
 
    // Step conversion into rotation angle
@@ -124,43 +124,68 @@ void _DrawBrickLetter(HDC hdc, int x, int y, int rotation_step)
    int back_part_offset;
 
    XFORM xForm, old_xForm;
-   
+
+   if (rotation_step == 4 || rotation_step == 12)
+   {
+      // Show brick background
+      SelectObject(hdc, Pink_Pen);
+      SelectObject(hdc, Pink_Brush);
+
+      Rectangle(hdc, 
+         x,
+         y + brick_half_height - Scale,
+         x + Brick_Width * Scale,
+         y + brick_half_height);
+
+      // Show brick foreground
+      SelectObject(hdc, Blue_Pen);
+      SelectObject(hdc, Blue_Brush);
+
+      Rectangle(hdc, 
+         x,
+         y + brick_half_height,
+         x + Brick_Width * Scale,
+         y + brick_half_height + Scale - 1);
+   }
+   else
+   {
    SetGraphicsMode(hdc, GM_ADVANCED);
 
+   // Letters rotation matrix
    xForm.eM11 = 1.0f;
    xForm.eM12 = 0.0f;
    xForm.eM21 = 0.0f;
    xForm.eM22 = (float)cos(rotation_angle);
    xForm.eDx = (float)x;
    xForm.eDy = (float)y + (float)(brick_half_height);
+
    GetWorldTransform(hdc, &old_xForm);
    SetWorldTransform(hdc, &xForm);
 
+      // Show brick background
+      SelectObject(hdc, Pink_Pen);
+      SelectObject(hdc, Pink_Brush);
 
-   SelectObject(hdc, Pink_Pen);
-   SelectObject(hdc, Pink_Brush);
+      offset = 3.0 * (1.0 - fabs(xForm.eM22)) * (double)Scale;
 
+      back_part_offset = (int)round(offset);
 
-   offset = 3.0 * (1.0 - fabs(xForm.eM22)) * (double)Scale;
+      Rectangle(hdc, 0,
+         -brick_half_height - back_part_offset,
+         Brick_Width * Scale,
+         brick_half_height - back_part_offset);
 
-   back_part_offset = (int)round(offset);
+      // Show brick foreground
+      SelectObject(hdc, Blue_Pen);
+      SelectObject(hdc, Blue_Brush);
 
-   Rectangle(hdc, 0, 
-      -brick_half_height - back_part_offset,
-      Brick_Width * Scale, 
-      brick_half_height - back_part_offset);
+      Rectangle(hdc, 0,
+         -brick_half_height,
+         Brick_Width * Scale,
+         brick_half_height);
 
-
-   SelectObject(hdc, Blue_Pen);
-   SelectObject(hdc, Blue_Brush);
-
-   Rectangle(hdc, 0, 
-      -brick_half_height, 
-      Brick_Width * Scale, 
-      brick_half_height);
-
-   SetWorldTransform(hdc, &old_xForm);
-
+      SetWorldTransform(hdc, &old_xForm);
+   }
 }
 //----------------------------------------------------------------------------------------------------
 void _DrawLevel(HDC hdc)
