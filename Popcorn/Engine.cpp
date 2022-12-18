@@ -17,26 +17,41 @@ enum E_Brick_Type
    EBT_Blue
 };
 
-HPEN Highlight_Pen, Letter_Pen, Pink_Pen, Blue_Pen;
-HBRUSH Pink_Brush, Blue_Brush;
+HWND Hwnd;
+HPEN Highlight_Pen, Letter_Pen, Pink_Pen, Blue_Pen, BG_Pen;
+HBRUSH Pink_Brush, Blue_Brush, BG_Brush;
+RECT Platform_Rect, Prev_Platform_Rect;
+RECT Level_Rect;
 
+// global constant variables
 const int Scale = 3;
 
-const int Cell_Width = 16; // width of brick + 1px frame
-const int Cell_Height = 8; // height of brick + 1px frame
+const int Cell_Width = 16;
+const int Cell_Height = 8;
 
-const int X_Offset = 8; // right offset
-const int Y_Offset = 6; // down offset
+const int X_Offset = 8;
+const int Y_Offset = 6;
+
+const int Level_Width = 14; // Level width in cells
+const int Level_Heigth = 12;
 
 const int Brick_Width = 15;
 const int Brick_Heigth = 7;
 
 const int Ellipse_Size = 7;
+const int Platform_Y_Pos = 185;
 
+const int Platform_Height = 7;
+
+// global variables
+int Platform_Speed = 2;
 int Inner_Width = 21;
+int Platform_X_Pos = 0;
+int Platform_X_Step = Scale * Platform_Speed;
+int Platform_Width = 28;
 
 //----------------------------------------------------------------------------------------------------
-char Level_01[14][12] =
+char Level_01[Level_Width][Level_Heigth] =
 { // Bricks position on the game frame
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -59,12 +74,26 @@ void _CreateColor(unsigned char r, unsigned char g, unsigned char b, HPEN &pen, 
 
    pen = CreatePen(PS_SOLID, 0, RGB(r, g, b));
    brush = CreateSolidBrush(RGB(r, g, b));
-   
 }
 //----------------------------------------------------------------------------------------------------
-void _Init()
+void _RedrawPlatform()
+{
+   Prev_Platform_Rect = Platform_Rect;
+
+   Platform_Rect.left = (X_Offset + Platform_X_Pos) * Scale;
+   Platform_Rect.top = Platform_Y_Pos * Scale;
+   Platform_Rect.right = Platform_Rect.left + Platform_Width * Scale;
+   Platform_Rect.bottom = Platform_Rect.top + Platform_Height * Scale;
+
+   InvalidateRect(Hwnd, &Prev_Platform_Rect, FALSE);
+   InvalidateRect(Hwnd, &Platform_Rect, FALSE);
+}
+//----------------------------------------------------------------------------------------------------
+void _InitEngine(HWND hwnd)
 { // Initialize colors on the game start
 
+   Hwnd = hwnd;
+      
    // Create the highlight
    Highlight_Pen = CreatePen(PS_SOLID, 0, RGB(255, 255, 255));
    
@@ -77,6 +106,15 @@ void _Init()
    // Create blue color
    _CreateColor(85, 185, 255, Blue_Pen, Blue_Brush);
 
+   // Create background color
+   _CreateColor(55, 65, 70, BG_Pen, BG_Brush);
+
+   Level_Rect.left = X_Offset * Scale;
+   Level_Rect.top = Y_Offset * Scale;
+   Level_Rect.right = Level_Rect.left + Cell_Width * Level_Width * Scale;
+   Level_Rect.bottom = Level_Rect.top + Cell_Width * Level_Heigth * Scale;
+
+   _RedrawPlatform();
 }
 //----------------------------------------------------------------------------------------------------
 void _DrawBrick(HDC hdc, int x, int y, E_Brick_Type brick_type)
@@ -275,6 +313,15 @@ void _DrawLevel(HDC hdc)
 void _DrawPlatform(HDC hdc, int x, int y)
 { // Draw the platform
    
+   // Clear platform position background
+   SelectObject(hdc, BG_Pen);
+   SelectObject(hdc, BG_Brush);
+   Rectangle(hdc, 
+      Prev_Platform_Rect.left,
+      Prev_Platform_Rect.top,
+      Prev_Platform_Rect.right,
+      Prev_Platform_Rect.bottom);
+
    // Paint the ellipses
    SelectObject(hdc, Pink_Pen);
    SelectObject(hdc, Pink_Brush);
@@ -323,20 +370,47 @@ void _DrawPlatform(HDC hdc, int x, int y)
 
       2 * Scale, // ellipse width to draw the rounded corners
       2 * Scale); // ellipse height to draw the rounded corners
-
 }
 //----------------------------------------------------------------------------------------------------
-void _DrawFrame(HDC hdc)
+void _DrawFrame(HDC hdc, RECT &paint_area)
 { // Draw the game frame
 
-   /*_DrawLevel(hdc);
+   RECT intersection_rect;
 
-   _DrawPlatform(hdc, 80, 120);*/
+   if (IntersectRect(&intersection_rect, &paint_area, &Level_Rect))
+      _DrawLevel(hdc);
 
-   for (int step = 0; step < 16; step++)
+   if (IntersectRect(&intersection_rect, &paint_area, &Platform_Rect))
+      _DrawPlatform(hdc, X_Offset + Platform_X_Pos, Platform_Y_Pos);
+
+   /*for (int step = 0; step < 16; step++)
    {
       _DrawBrickLetter(hdc, 20 + step * Cell_Width * Scale, 100, step, EBT_Blue, ELT_O);
       _DrawBrickLetter(hdc, 20 + step * Cell_Width * Scale, 140, step, EBT_Pink, ELT_O);
+   }*/
+}
+//----------------------------------------------------------------------------------------------------
+int _OnKeyDown(E_Key_Type key_type)
+{
+   switch (key_type)
+   {
+   case EKT_Left:
+      Platform_X_Pos -= Platform_X_Step;
+      _RedrawPlatform();
+      break;
+
+   case EKT_Right:
+      Platform_X_Pos += Platform_X_Step;
+      _RedrawPlatform();
+      break;
+
+   case EKT_Space:
+
+      break;
+
+   default:
+      break;
    }
+   return 0;
 }
 //----------------------------------------------------------------------------------------------------

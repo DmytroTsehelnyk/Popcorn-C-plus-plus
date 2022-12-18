@@ -98,8 +98,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // Store instance handle in our global variable
 
-   _Init();
-
    RECT window_rect; // Defines a rectangle by the coordinates of its upper-left and lower-right corners
    window_rect.left = 0;
    window_rect.top = 0;
@@ -116,6 +114,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    if (hWnd == 0)
       return FALSE;
+
+   _InitEngine(hWnd);
 
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
@@ -160,8 +160,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: Add any drawing code that uses hdc here...
-            _DrawFrame(hdc);
+            // Drawing code
+            _DrawFrame(hdc, ps.rcPaint);
             EndPaint(hWnd, &ps);
         }
         break;
@@ -170,6 +170,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
+
+
+    case WM_KEYDOWN:
+
+       switch (wParam)
+       {
+       case VK_LEFT:
+          return _OnKeyDown(EKT_Left);
+       
+       case VK_RIGHT:
+          return _OnKeyDown(EKT_Right);
+       
+       case VK_SPACE:
+          return _OnKeyDown(EKT_Space);
+       }
+       break;
 
 
     default:
